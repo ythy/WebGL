@@ -1,51 +1,27 @@
 import * as webglUtils  from './webgl/webglUtils';
-import { createTrianglePyramidVertices, createSquareVertices, bufferVertices } from './webgl/vertices';
+import { createTrianglePyramidVertices, createSquareVertices } from './webgl/vertices';
 import { fsSource, vsSource } from './webgl/glslSource';
 import * as mat4 from './glsl/mat4';
+import { Shape } from './webgl/Settings';
 
-enum Shape{
-  Pyramid,
-  Square,
-}
-
-interface DrawObject{
-  programInfo: webglUtils.PropramInfoResult;
-  buffers: bufferVertices;
-  translateVector: number[];
-  rotateRadians?: number;
-  rotateAxis?: number[];
-  colorMult: number[];
-  type: Shape;
-}
+const shapes = [Shape.PyramidSolid, Shape.Pyramid, Shape.Cube, Shape.Circle, Shape.Sphere]//Shape.PyramidSolid, Shape.Pyramid
 
 class WebGL {
 
   gl: WebGLRenderingContext;
   mRotation = 0.0;
-  objectsToDraw: DrawObject[] = [];
+  objectsToDraw: WEBGL.DrawObject[] = [];
 
   constructor() {
     this.gl = webglUtils.createdContext();
     let shaderProgram = webglUtils.getProgramInfo(this.gl, vsSource, fsSource);
     //shaderProgram.uniformLocations.colorMult = this.gl.getUniformLocation(shaderProgram, 'uColorMult');
-
-    const buffers = createTrianglePyramidVertices(1);
-    this.objectsToDraw.push({
-      programInfo: shaderProgram, buffers, translateVector: [0, 0, -3.0], rotateRadians: 0.7, rotateAxis: [ 1, 1, 0],
-      colorMult: [0.5, 1, 0.9, 1], type:Shape.Pyramid
-    })
-
-    const buffers2 = createTrianglePyramidVertices(1, {x: 1});
-    this.objectsToDraw.push({
-      programInfo: shaderProgram, buffers: buffers2, translateVector: [0, 0, -4.0], rotateRadians: 0.5, rotateAxis: [0, 1, 1],
-      colorMult: [0.9, 0.2, 0.5, 1], type: Shape.Pyramid
-    })
-
-    const buffers3 = createSquareVertices(1);
-    this.objectsToDraw.push({
-      programInfo: shaderProgram, buffers: buffers3, translateVector: [0, 0, -3.0], rotateRadians: 0.7, rotateAxis: [1, 1, 0],
-      colorMult: [0.9, 0.2, 0.5, 1], type: Shape.Square
-    })
+    
+    let count = 5;
+    while(count-- > 0){
+      this.objectsToDraw.push(...webglUtils.getDrawObject(shapes[count % shapes.length], shaderProgram));
+    } 
+ 
 
     let then = 0;
     // Draw the scene repeatedly
@@ -85,17 +61,13 @@ class WebGL {
       gl.uniformMatrix4fv(e.programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
       //gl.uniform4fv(e.programInfo.uniformLocations.colorMult, e.colorMult);
 
-      let vertexCount;
-      if(e.type === Shape.Pyramid){
-        vertexCount = 12;
-        gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-      }
-      else if (e.type === Shape.Square) {
-        vertexCount = 6;
-        gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_SHORT, 0);
-      }
+      let vertexCount = e.vertexCount;
 
-     
+      if (e.buffers.indices)
+        gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_SHORT, 0);
+      else
+        gl.drawArrays(gl.TRIANGLES, 0, vertexCount);  
+      
     })
 
     // Update the rotation for the next draw

@@ -1,21 +1,8 @@
-import { bufferVertices } from './vertices';
 import * as mat4 from '../glsl/mat4';
+import { Shape } from './Settings';
+import * as vertices from './vertices';
 
-export interface PropramInfoResult{
-  program: WebGLProgram;
-  attribLocations: {
-    [x:string]:number;
-    vertexPosition?: number;
-    vertexColor?:number;
-  },
-  uniformLocations: {
-    [x: string]: WebGLUniformLocation;
-    projectionMatrix?: WebGLUniformLocation;
-    modelViewMatrix?: WebGLUniformLocation;
-  }
-}
-
-export function getProgramInfo(gl: WebGLRenderingContext, vsSource: string, fsSource: string): PropramInfoResult {
+export function getProgramInfo(gl: WebGLRenderingContext, vsSource: string, fsSource: string): WEBGL.PropramInfoResult {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -74,7 +61,7 @@ export function createdContext(): WebGLRenderingContext {
   return gl;
 }
 
-export function setBuffersAndAttributes(gl: WebGLRenderingContext, programInfo: any, buffer: bufferVertices):void {
+export function setBuffersAndAttributes(gl: WebGLRenderingContext, programInfo: any, buffer: WEBGL.BufferVertices):void {
 
   const positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -82,12 +69,13 @@ export function setBuffersAndAttributes(gl: WebGLRenderingContext, programInfo: 
   gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
-
-  const colorBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(buffer.color), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+  if (buffer.color){
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(buffer.color), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+  }
 
   if(buffer.indices){
     const indexBuffer = gl.createBuffer();
@@ -126,4 +114,86 @@ export function drawRenderingInit(gl: WebGLRenderingContext): Float32Array {
     zFar);
 
   return projectionMatrix;
+}
+
+export function getDrawObject(type, programInfo: WEBGL.PropramInfoResult): WEBGL.DrawObject[] {
+  let result: WEBGL.DrawObject[] = [];
+  const config:WEBGL.Vertices3 = {
+    x: 0 + random(2), y: 0 + random(2), z: 0 + random(1)
+  }
+  if (type === Shape.Pyramid) {
+    const buffers = vertices.createTrianglePyramidVertices(1, config);
+    const object: WEBGL.DrawObject = {
+      programInfo, buffers, type,
+      ...getVerticesAnimate(),
+      vertexCount: 12,
+    }
+    result.push(object)
+  }
+  else if (type === Shape.Cube) {
+    const buffers = vertices.createCubeVertices(0.5, config);
+    const object: WEBGL.DrawObject = {
+      programInfo, buffers, type,
+      ...getVerticesAnimate(),
+      vertexCount: 36,
+    }
+    result.push(object)
+  }
+  else if(type === Shape.PyramidSolid) {
+    const buffers = vertices.createTrianglePyramidSolidVertices(1, config);
+    const object: WEBGL.DrawObject = {
+      programInfo, buffers, type,
+      ...getVerticesAnimate(),
+      vertexCount: 18,
+    }
+    result.push(object)
+  }
+  else if (type === Shape.Circle) {
+    const buffers = vertices.createCircleVertices(1);
+    const object: WEBGL.DrawObject = {
+      programInfo, buffers, type,
+      ...getVerticesAnimate(),
+      vertexCount: buffers.indices.length,
+    }
+    result.push(object)
+  }
+  else if (type === Shape.Sphere) {
+    const buffers = vertices.createSphereVertices(1);
+    const object: WEBGL.DrawObject = {
+      programInfo, buffers, type,
+      ...getVerticesAnimate(),
+      vertexCount: buffers.indices.length,
+    }
+    result.push(object)
+  }
+  return result;
+}
+
+function getVerticesAnimate() {
+  let translate = random(10);
+  if (translate <= 3)
+    translate = 3;
+  return {
+    translateVector: [0, 0, -translate],
+    rotateRadians: translate / 10,
+    rotateAxis: [random(1, true), random(1, true), random(1, true)],
+  }
+}
+
+export function random(max:number, zero:boolean = false):number{
+  let result = Math.random();
+  if (zero){
+    return Math.ceil(result * 10000) % (max + 1)
+  } else if (max === 1)
+    return result;
+  else
+    return result * 10000 % max;
+}
+
+
+const trueColor = [0, 0.2, 0.4, 0.6, 0.8, 1];
+//随机生成顶点颜色
+export function randomVerticeColor(alpha:boolean = false): number[] {
+  return [trueColor[Math.ceil(Math.random() * 10000) % trueColor.length], trueColor[Math.ceil(Math.random() * 10000) % trueColor.length], 
+    trueColor[Math.ceil(Math.random() * 10000) % trueColor.length], alpha ? random(1) : 1]
 }

@@ -1,18 +1,9 @@
-export interface bufferVertices{
-  position: number[];
-  color: number[];
-  indices?: number[];
-}
-
-interface Vertices3{
-  x?:number;
-  y?: number;
-  z?: number;
-}
+import { randomVerticeColor } from './webglUtils';
+import * as webglUtils from './webglUtils';
 
 //金字塔形锥体
-export function createTrianglePyramidVertices(size: number = 1.0, offset?: Vertices3): bufferVertices { 
-  const unit:number = 1.0 * size;
+export function createTrianglePyramidVertices(size: number = 1.0, offset?: WEBGL.Vertices3): WEBGL.BufferVertices {
+  const unit: number = 1.0 * size;
   const facePositions = [
     0.0, unit, 0.0,
     -unit, 0.0, 0.0,
@@ -32,8 +23,123 @@ export function createTrianglePyramidVertices(size: number = 1.0, offset?: Verti
   ];
 
   let finalPositoin = [];
-  facePositions.forEach((v, i)=>{
-    const t = ( i + 1 ) % 3;
+  facePositions.forEach((v, i) => {
+    const t = (i + 1) % 3;
+    if (t === 1 && offset && offset.x)
+      v = v + offset.x;
+    else if (t === 2 && offset && offset.y)
+      v += offset.y;
+    else if (t === 0 && offset && offset.z)
+      v += offset.z;
+    finalPositoin.push(v);
+  })
+
+  const colors4 = [
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+  ];
+
+  // Convert the array of colors into a table for all the vertices.
+  let faceColors = [];
+  for (let j = 0; j < colors4.length; ++j) {
+    const c = colors4[j];
+    faceColors = faceColors.concat(c, c, c);
+  }
+
+  return {
+    position: finalPositoin,
+    color: faceColors,
+  };
+}
+
+//金字塔形锥体有底
+export function createTrianglePyramidSolidVertices(size: number = 1.0, offset?: WEBGL.Vertices3): WEBGL.BufferVertices {
+  const unit: number = 1.0 * size;
+  const facePositions = [
+    0.0, unit, 0.0,
+    -unit, 0.0, 0.0,
+    0.0, 0.0, unit,
+
+    0.0, unit, 0.0,
+    0.0, 0.0, unit,
+    unit, 0.0, 0.0,
+
+    0.0, unit, 0.0,
+    unit, 0.0, 0.0,
+    0.0, 0.0, -unit,
+
+    0.0, unit, 0.0,
+    0.0, 0.0, -unit,
+    -unit, 0.0, 0.0,
+
+    0.0, 0.0, -unit,
+    unit, 0.0, 0.0,
+    0.0, 0.0, unit,
+    -unit, 0.0, 0.0,
+
+  ];
+
+  let finalPositoin = [];
+  facePositions.forEach((v, i) => {
+    const t = (i + 1) % 3;
+    if (t === 1 && offset && offset.x)
+      v = v + offset.x;
+    else if (t === 2 && offset && offset.y)
+      v += offset.y;
+    else if (t === 0 && offset && offset.z)
+      v += offset.z;
+    finalPositoin.push(v);
+  })
+
+  const colors4 = [
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+  ];
+
+  // Convert the array of colors into a table for all the vertices.
+  let faceColors = [];
+  for (let j = 0; j < colors4.length; ++j) {
+    const c = colors4[j];
+    if (j === 4)
+      faceColors = faceColors.concat(c, c, c, c);
+    else
+      faceColors = faceColors.concat(c, c, c);
+  }
+
+  const indices = [
+    0, 1, 2,
+    3, 4, 5,
+    6, 7, 8,
+    9, 10, 11,
+    12, 13, 14, 12, 14, 15,
+  ];
+
+  return {
+    position: finalPositoin,
+    color: faceColors,
+    indices
+  };
+}
+
+
+//正方形
+export function createSquareVertices(size: number = 1.0, offset?: WEBGL.Vertices3): WEBGL.BufferVertices {
+  const unit: number = 1.0 * size;
+  const facePositions = [
+    0.0, 0.0, -unit,
+    unit, 0.0, 0.0,
+    0.0, 0.0, unit,
+    -unit, 0.0, 0.0,
+  ];
+
+  let finalPositoin = [];
+  facePositions.forEach((v, i) => {
+    const t = (i + 1) % 3;
     if (t === 1 && offset && offset.x)
       v = v + offset.x;
     else if (t === 2 && offset && offset.y)
@@ -45,69 +151,188 @@ export function createTrianglePyramidVertices(size: number = 1.0, offset?: Verti
 
 
   const colors4 = [
-    [0.0, 1.0, 0.0, 1.0],
-    [0.0, 0.0, 1.0, 1.0],
-    [1.0, 1.0, 0.0, 1.0],
-    [1.0, 0.0, 1.0, 1.0],
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
   ];
 
-  // Convert the array of colors into a table for all the vertices.
-  var faceColors = [];
-  for (var j = 0; j < colors4.length; ++j) {
+  let faceColors = [];
+  for (let j = 0; j < colors4.length; ++j) {
     const c = colors4[j];
-    faceColors = faceColors.concat(c, c, colors4[2]);
+    faceColors = faceColors.concat(c);
   }
+
+  const indices = [
+    0, 1, 2, 0, 2, 3,
+  ];
 
   return {
     position: finalPositoin,
     color: faceColors,
+    indices
   };
+
 }
 
-  //正方形
-export function createSquareVertices(size: number = 1.0, offset?: Vertices3): bufferVertices {
-    const unit: number = 1.0 * size;
-    const facePositions = [
-      0.0, 0.0, -unit,
-      unit, 0.0, 0.0,
-      0.0, 0.0, unit,
-      -unit, 0.0, 0.0,
-    ];
 
-    let finalPositoin = [];
-    facePositions.forEach((v, i) => {
-      const t = (i + 1) % 3;
-      if (t === 1 && offset && offset.x)
-        v = v + offset.x;
-      else if (t === 2 && offset && offset.y)
-        v += offset.y;
-      else if (t === 0 && offset && offset.z)
-        v += offset.z;
-      finalPositoin.push(v);
-    })
+//正方体
+export function createCubeVertices(size: number = 1.0, offset?: WEBGL.Vertices3): WEBGL.BufferVertices {
+  const unit: number = 1.0 * size;
+  const facePositions = [
+    // Front face
+    -unit, -unit, unit,
+    unit, -unit, unit,
+    unit, unit, unit,
+    -unit, unit, unit,
+
+    // Back face
+    -unit, -unit, -unit,
+    -unit, unit, -unit,
+    unit, unit, -unit,
+    unit, -unit, -unit,
+
+    // Top face
+    -unit, unit, -unit,
+    -unit, unit, unit,
+    unit, unit, unit,
+    unit, unit, -unit,
+
+    // Bottom face
+    -unit, -unit, -unit,
+    unit, -unit, -unit,
+    unit, -unit, unit,
+    -unit, -unit, unit,
+
+    // Right face
+    unit, -unit, -unit,
+    unit, unit, -unit,
+    unit, unit, unit,
+    unit, -unit, unit,
+
+    // Left face
+    -unit, -unit, -unit,
+    -unit, -unit, unit,
+    -unit, unit, unit,
+    -unit, unit, -unit,
+  ];
+
+  let finalPositoin = [];
+  facePositions.forEach((v, i) => {
+    const t = (i + 1) % 3;
+    if (t === 1 && offset && offset.x)
+      v = v + offset.x;
+    else if (t === 2 && offset && offset.y)
+      v += offset.y;
+    else if (t === 0 && offset && offset.z)
+      v += offset.z;
+    finalPositoin.push(v);
+  })
 
 
-     const colors4 = [
-      [0.0, 1.0, 0.0, 1.0],
-      [0.0, 0.0, 1.0, 1.0],
-      [1.0, 1.0, 0.0, 1.0],
-      [1.0, 0.0, 1.0, 1.0],
-    ];
+  const colors6 = [
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+    randomVerticeColor(),
+  ];
 
-    var faceColors = [];
-    for (var j = 0; j < colors4.length; ++j) {
-      const c = colors4[j];
-      faceColors = faceColors.concat(c);
-    }
+  let faceColors = [];
+  for (let j = 0; j < colors6.length; ++j) {
+    const c = colors6[j];
+    faceColors = faceColors.concat(c, c, c, c);
+  }
 
-    const indices = [
-      0, 1, 2, 0, 2, 3,
-    ];
+  const indices = [
+    0, 1, 2, 0, 2, 3,    // front
+    4, 5, 6, 4, 6, 7,    // back
+    8, 9, 10, 8, 10, 11,   // top
+    12, 13, 14, 12, 14, 15,   // bottom
+    16, 17, 18, 16, 18, 19,   // right
+    20, 21, 22, 20, 22, 23,   // left
+  ];
 
-    return {
-      position: finalPositoin,
-      color: faceColors,
-      indices
-    };
+  return {
+    position: finalPositoin,
+    color: faceColors,
+    indices
+  };
+
+}
+
+//画圆形
+export function createCircleVertices(size: number = 1.0): WEBGL.BufferVertices {
+
+  const N = 50;
+  let facePositions = [0.0, 0.0, 0.0];
+  let indices = [];
+  const r = 0.5 * size; //半径
+
+  for (let i = 0; i < N; i++) {
+    const theta = i * (((2 * r * Math.PI) / N) / r); //求一段N 对应的弧度(长度为R是一弧度)
+    let z = r * Math.sin(theta);
+    let x = r * Math.cos(theta);
+    facePositions.push(x, 0.0, z);
+
 
   }
+
+  const colors1 = [
+    randomVerticeColor(),
+  ];
+
+  let faceColors = [];
+  for (let j = 0; j <= N; ++j) 
+    faceColors = faceColors.concat(colors1[0]);
+
+  for (let i = 0; i < N; i++) {
+    indices.push(0, i + 1, i + 1 === N ? 1 : i + 2);
+  }
+
+  return {
+    position: facePositions,
+    color: faceColors,
+    indices
+  };
+
+}
+
+//画球体
+export function createSphereVertices(size: number = 1.0): WEBGL.BufferVertices {
+
+  const N = 8;
+  let facePositions = [];
+  let indices = [];
+  const r = 0.5 * size; //半径
+
+  for (let i = 0; i < N; i++) {
+    const theta = i * ((r * Math.PI / N) / r); //求一段N 对应的弧度(注意：这里是半圆基准, 假象维度)
+    let y = r * Math.cos(theta);
+    let er = r * Math.sin(theta);
+    facePositions.push(0.0, y, 0.0);
+    for (let j = 0; j < N; j++) {
+      const etheta = j * (((2 * er * Math.PI) / N) / er); //求一段N 对应的弧度(这里是一小整圆)
+      let ex = er * Math.cos(etheta);
+      let ez = er * Math.sin(etheta);
+      facePositions.push(ex, y, ez);
+      indices.push(i * ( N + 1) , i * ( N + 1 ) + j + 1, j + 1 === N ? i * ( N + 1) + 1 : i * ( N + 1 ) + j + 2);
+    }
+  }
+
+  const colors1 = [
+    randomVerticeColor(),
+  ];
+
+  let faceColors = [];
+  for (let j = 0; j < 3 * N * N; ++j)
+    faceColors = faceColors.concat(colors1[0]);
+
+  return {
+    position: facePositions,
+    color: faceColors,
+    indices
+  };
+
+}
