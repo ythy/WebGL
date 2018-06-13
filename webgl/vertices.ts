@@ -292,44 +292,10 @@ export function createCubeVertices(size: number = 1.0, offset?: WEBGL.Vertices3)
     -1.0, 0.0, 0.0
   ];
 
-  const textureCoordinates = [
-    // Front
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-    // Back
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-    // Top
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-    // Bottom
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-    // Right
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-    // Left
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-  ];
-
   return {
     position: finalPositoin,
-    //color: faceColors,
+    color: faceColors,
     normal: vertexNormals,
-    texture: textureCoordinates,
     indices
   };
 
@@ -373,7 +339,7 @@ export function createCircleVertices(size: number = 1.0): WEBGL.BufferVertices {
 //画球体
 export function createSphereVertices(size: number = 1.0): WEBGL.BufferVertices {
 
-  const N = 20;
+  const N = 30;
   let facePositions = [];
   let indices = [];
   let normals = [];
@@ -384,7 +350,7 @@ export function createSphereVertices(size: number = 1.0): WEBGL.BufferVertices {
     const theta = i * (Math.PI / N); //求一段N 对应的弧度(注意：这里是半圆基准, 假想维度)
     let y = r * Math.cos(theta);
     let er = r * Math.sin(theta);
-    for (let j = 0; j < N; j++) {
+    for (let j = 0; j <= N; j++) {
       const etheta = j * ((2 * Math.PI) / N); //求一段N 对应的弧度(这里是一小整圆)
       let ex = er * Math.cos(etheta);
       let ez = er * Math.sin(etheta);
@@ -398,20 +364,13 @@ export function createSphereVertices(size: number = 1.0): WEBGL.BufferVertices {
 
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N ; j++) {
-      const Line1 = i * N + j; //第一行的点
-      const Line2 = (i + 1) * N + j;//第二行的点
-
-      let Line22 = Line2 + 1;
-      if (Line22 % N === 0 )
-        Line22 = Line22 - N;
-
-      let Line12 = Line1 + 1;
-      if (Line12 % N === 0)
-        Line12 = Line12 - N;
+      const Line1 = i * (N + 1) + j; //第一行的点
+      const Line2 = (i + 1) * (N + 1) + j;//第二行的点, 
+      //position一行N+1个点，起始2个重合，所以indices一行需要和下一行配对N组矩形，每组2个三角形。
 
       indices.push(
-        Line1, Line2, Line22,
-        Line1, Line12, Line22,
+        Line1, Line2, Line2 + 1,
+        Line1, Line1 + 1, Line2 + 1,
       );
     }
   }

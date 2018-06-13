@@ -22,7 +22,7 @@ class WebGL {
     while(count-- > 0){
       let shaderProgram;
       const shape = shapes[Math.ceil(Math.random() * 1000) % shapes.length];
-      if (shape === Shape.Cube || shape === Shape.Sphere)
+      if (shape === Shape.Sphere)
         shaderProgram = webglUtils.getProgramInfo(this.gl, vsSourceTexture, fsSourceTexture);
       else
         shaderProgram = webglUtils.getProgramInfo(this.gl, vsSource, fsSource);
@@ -30,8 +30,9 @@ class WebGL {
       const object = webglUtils.getDrawObject(shape, shaderProgram)[0];
       this.objectsToDraw.push(object);
     } 
- 
+  }
 
+  startRender(){
     let then = 0;
     // Draw the scene repeatedly
     const render = (now) => {
@@ -44,12 +45,17 @@ class WebGL {
     requestAnimationFrame(render);
   }
 
+
   handleLoadedTexture(texture) {
     this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, texture.image);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
     this.gl.generateMipmap(this.gl.TEXTURE_2D);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+    
+    this.startRender();
   }
 
  initTexture() {
