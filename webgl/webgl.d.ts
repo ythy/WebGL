@@ -29,6 +29,8 @@ declare namespace WEBGL{
     position: number[];
     color?: number[];
     indices?: number[];
+    normal?: number[];// 光
+    texture?: number[];
   }
 
   export interface Vertices3 {

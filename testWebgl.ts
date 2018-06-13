@@ -1,25 +1,34 @@
 import * as webglUtils  from './webgl/webglUtils';
 import { createTrianglePyramidVertices, createSquareVertices } from './webgl/vertices';
-import { fsSource, vsSource } from './webgl/glslSource';
+import { fsSource, vsSource, fsSourceTexture, vsSourceTexture } from './webgl/glslSource';
 import * as mat4 from './glsl/mat4';
 import { Shape } from './webgl/Settings';
 
-const shapes = [Shape.PyramidSolid, Shape.Pyramid, Shape.Cube, Shape.Circle, Shape.Sphere]//Shape.PyramidSolid, Shape.Pyramid
+const shapes = [Shape.PyramidSolid, Shape.Pyramid, Shape.Cube, Shape.Sphere];//Shape.PyramidSolid, Shape.Pyramid
 
 class WebGL {
 
   gl: WebGLRenderingContext;
   mRotation = 0.0;
   objectsToDraw: WEBGL.DrawObject[] = [];
+  moonTexture;
 
   constructor() {
     this.gl = webglUtils.createdContext();
-    let shaderProgram = webglUtils.getProgramInfo(this.gl, vsSource, fsSource);
+    this.initTexture();
     //shaderProgram.uniformLocations.colorMult = this.gl.getUniformLocation(shaderProgram, 'uColorMult');
     
-    let count = 5;
+    let count = 4;
     while(count-- > 0){
-      this.objectsToDraw.push(...webglUtils.getDrawObject(shapes[count % shapes.length], shaderProgram));
+      let shaderProgram;
+      const shape = shapes[Math.ceil(Math.random() * 1000) % shapes.length];
+      if (shape === Shape.Cube || shape === Shape.Sphere)
+        shaderProgram = webglUtils.getProgramInfo(this.gl, vsSourceTexture, fsSourceTexture);
+      else
+        shaderProgram = webglUtils.getProgramInfo(this.gl, vsSource, fsSource);
+
+      const object = webglUtils.getDrawObject(shape, shaderProgram)[0];
+      this.objectsToDraw.push(object);
     } 
  
 
@@ -35,12 +44,33 @@ class WebGL {
     requestAnimationFrame(render);
   }
 
+  handleLoadedTexture(texture) {
+    this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, texture.image);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+  }
+
+ initTexture() {
+   this.moonTexture = this.gl.createTexture();
+   this.moonTexture.image = new Image();
+   this.moonTexture.image.onload = ()=> {
+     this.handleLoadedTexture(this.moonTexture)
+   }
+
+   this.moonTexture.image.src = "./static/moon.gif";
+  }
+
+
   private drawScene(gl: WebGLRenderingContext, deltaTime) {
     const projectionMatrix = webglUtils.drawRenderingInit(gl);
 
     this.objectsToDraw.forEach(e=>{
       // Set the drawing position to the "identity" point, which is
       // the center of the scene.
+     
+
       const modelViewMatrix = mat4.create();
       mat4.translate(modelViewMatrix,     // destination matrix
         modelViewMatrix,     // matrix to translate
@@ -52,6 +82,10 @@ class WebGL {
           this.mRotation * e.rotateRadians,// amount to rotate in radians
           e.rotateAxis);       // axis to rotate around (X)
 
+      const normalMatrix = mat4.create();
+      mat4.invert(normalMatrix, modelViewMatrix);
+      mat4.transpose(normalMatrix, normalMatrix);
+
        
       webglUtils.setBuffersAndAttributes(this.gl, e.programInfo, e.buffers);
       // Tell WebGL to use our program when drawing
@@ -59,7 +93,14 @@ class WebGL {
       // Set the shader uniforms
       gl.uniformMatrix4fv(e.programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
       gl.uniformMatrix4fv(e.programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-      //gl.uniform4fv(e.programInfo.uniformLocations.colorMult, e.colorMult);
+      gl.uniformMatrix4fv(e.programInfo.uniformLocations.normalMatrix, false, normalMatrix);
+      
+      if(e.buffers.texture){
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.moonTexture);
+        gl.uniform1i(e.programInfo.uniformLocations.uSampler, 0);
+      }
+     
 
       let vertexCount = e.vertexCount;
 

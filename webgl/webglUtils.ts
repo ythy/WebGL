@@ -23,10 +23,14 @@ export function getProgramInfo(gl: WebGLRenderingContext, vsSource: string, fsSo
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
       vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
+      textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
+      vertexNormal: gl.getAttribLocation(shaderProgram, 'aVertexNormal'),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+      normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
+      uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
     },
   };
 
@@ -75,14 +79,33 @@ export function setBuffersAndAttributes(gl: WebGLRenderingContext, programInfo: 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(buffer.color), gl.STATIC_DRAW);
     gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
-  }
+  } else if (programInfo.attribLocations.vertexColor > -1)
+    gl.disableVertexAttribArray(programInfo.attribLocations.vertexColor);
+
+  if (buffer.normal) {
+    const normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(buffer.normal), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(programInfo.attribLocations.vertexNormal, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
+  }else
+    gl.disableVertexAttribArray(programInfo.attribLocations.vertexNormal);
+
+  if (buffer.texture) {
+    const textureBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(buffer.texture), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+  } else if (programInfo.attribLocations.textureCoord > -1 )
+    gl.disableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
   if(buffer.indices){
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(buffer.indices), gl.STATIC_DRAW); //there can not be Float32Array
-
   }
+
 }
 
 export function drawRenderingInit(gl: WebGLRenderingContext): Float32Array {
